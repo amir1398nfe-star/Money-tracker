@@ -1,0 +1,12 @@
+import React, { useEffect, useState } from "react";
+import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { t, type Locale } from "@/lib/i18n";
+import { hasPin, verifyPin } from "@/lib/pin-security";
+
+export function BiometricLockOverlay({ visible, locale, onUnlock }: { visible: boolean; locale: Locale; onUnlock: () => void }) {
+  const [pinEnabled, setPinEnabled] = useState(false); const [pin, setPin] = useState(""); const [error, setError] = useState("");
+  useEffect(() => { if (visible) hasPin().then(setPinEnabled).catch(() => setPinEnabled(false)); }, [visible]);
+  const unlockWithPin = async () => { if (await verifyPin(pin)) { setPin(""); setError(""); onUnlock(); } else setError(t(locale, "wrongPin")); };
+  return <Modal visible={visible} transparent animationType="fade" onRequestClose={() => undefined}><View style={{ flex: 1, backgroundColor: "#292044", alignItems: "center", justifyContent: "center", padding: 28 }}><View style={{ width: 82, height: 82, borderRadius: 30, backgroundColor: "#47366E", alignItems: "center", justifyContent: "center", marginBottom: 22 }}><MaterialIcons name="fingerprint" size={52} color="#B8A8FF" /></View><Text style={{ color: "#FFFFFF", fontSize: 23, fontWeight: "900", textAlign: "center" }}>{t(locale, "biometricLock")}</Text><Text style={{ color: "#C9C1E0", fontSize: 13, textAlign: "center", marginTop: 9, lineHeight: 21 }}>{t(locale, "biometricPrompt")}</Text><Pressable onPress={onUnlock} style={({ pressed }) => [{ marginTop: 28, backgroundColor: "#7C5CFC", borderRadius: 16, paddingHorizontal: 30, paddingVertical: 14 }, pressed && { opacity: 0.8 }]}><Text style={{ color: "#FFFFFF", fontWeight: "900" }}>{t(locale, "biometricLock")}</Text></Pressable>{pinEnabled && <View style={{ width: "100%", marginTop: 22, gap: 9 }}><TextInput value={pin} onChangeText={(value) => { setPin(value); setError(""); }} keyboardType="number-pad" secureTextEntry maxLength={6} placeholder={t(locale, "enterPin")} placeholderTextColor="#A9A0C6" style={{ backgroundColor: "#47366E", borderRadius: 13, paddingVertical: 12, color: "#FFFFFF", textAlign: "center", letterSpacing: 4 }} /><Pressable onPress={unlockWithPin}><Text style={{ color: "#B8A8FF", textAlign: "center", fontWeight: "900" }}>{t(locale, "enterPin")}</Text></Pressable>{Boolean(error) && <Text style={{ color: "#FFAE9A", textAlign: "center", fontSize: 11 }}>{error}</Text>}</View>}</View></Modal>;
+}
