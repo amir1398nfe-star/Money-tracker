@@ -33,6 +33,11 @@ module.exports = {
     scheme: env.scheme,
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+    extra: {
+      eas: {
+        projectId: "c13c5f36-05fe-4265-b5f7-3299c48c6c73"
+      }
+    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: env.iosBundleId,
