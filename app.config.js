@@ -32,7 +32,7 @@ module.exports = {
     icon: "./assets/images/icon.png",
     scheme: env.scheme,
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
+    newArchEnabled: false,
     extra: {
       eas: {
         projectId: "c13c5f36-05fe-4265-b5f7-3299c48c6c73"
@@ -114,7 +114,6 @@ module.exports = {
         {
           android: {
             enableProguardInReleaseBuilds: false,
-            extraMavenRepos: [],
             minSdkVersion: 24
           }
         }
@@ -122,7 +121,7 @@ module.exports = {
     ],
     experiments: {
       typedRoutes: true,
-      reactCompiler: true,
+      reactCompiler: false
     },
   },
 };
