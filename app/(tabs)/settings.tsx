@@ -1,11 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from 'nativewind'; // استفاده از سیستم تم پروژه شما
+import { useThemeContext } from '../../lib/theme-provider'; // ایمپورت صحیح از تم‌پروایدر پروژه
 
 export default function SettingsScreen() {
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme } = useThemeContext();
   const isDark = colorScheme === 'dark';
+
+  const toggleTheme = () => {
+    setColorScheme(isDark ? 'light' : 'dark');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#f9f9f9' }]}>
@@ -28,7 +32,7 @@ export default function SettingsScreen() {
 
         <Switch
           value={isDark}
-          onValueChange={toggleColorScheme}
+          onValueChange={toggleTheme}
           trackColor={{ false: '#767577', true: '#4f46e5' }}
           thumbColor={isDark ? '#ffffff' : '#f4f3f4'}
         />
