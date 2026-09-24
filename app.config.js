@@ -32,7 +32,7 @@ module.exports = {
     icon: "./assets/images/icon.png",
     scheme: env.scheme,
     userInterfaceStyle: "automatic",
-    newArchEnabled: false,
+    newArchEnabled: true, // این خط از false به true تغییر کرد تا خطای Reanimated حل شود
     extra: {
       eas: {
         projectId: "c13c5f36-05fe-4265-b5f7-3299c48c6c73"
