@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../context/ThemeContext'; // مسیر را متناسب با ساختار خود تنظیم کنید
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SettingsScreen() {
   const { toggleTheme, isDark } = useTheme();
