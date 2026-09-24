@@ -1,31 +1,26 @@
-import React, { createContext, useContext, useState } from 'react';
+export type ColorScheme = "light" | "dark";
 
-type ThemeType = 'light' | 'dark';
-
-interface ThemeContextType {
-  theme: ThemeType;
-  toggleTheme: () => void;
-  isDark: boolean;
-}
-
-const ThemeContext = createContext<ThemeContextType>({
-  theme: 'light',
-  toggleTheme: () => {},
-  isDark: false,
-});
-
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<ThemeType>('light');
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === 'dark' }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+export const SchemeColors = {
+  light: {
+    primary: "#4f46e5",
+    background: "#f9f9f9",
+    surface: "#ffffff",
+    foreground: "#333333",
+    muted: "#666666",
+    border: "#e5e5e5",
+    success: "#10b981",
+    warning: "#f59e0b",
+    error: "#ef4444",
+  },
+  dark: {
+    primary: "#6366f1",
+    background: "#121212",
+    surface: "#1e1e1e",
+    foreground: "#ffffff",
+    muted: "#a1a1aa",
+    border: "#27272a",
+    success: "#10b981",
+    warning: "#f59e0b",
+    error: "#ef4444",
+  },
 };
-
-export const useTheme = () => useContext(ThemeContext);
