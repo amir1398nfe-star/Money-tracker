@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeContext } from '../../lib/theme-provider'; // ایمپورت صحیح از تم‌پروایدر پروژه
+import { useThemeContext } from '@/lib/theme-provider'; // استفاده از alias استاندارد پروژه
 
 export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
