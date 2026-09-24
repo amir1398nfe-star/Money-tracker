@@ -6,7 +6,6 @@
   "build": {
     "preview": {
       "node": "20.18.0",
-      "packageManager": "pnpm",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
