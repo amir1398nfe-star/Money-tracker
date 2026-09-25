@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeContext } from '@/lib/theme-provider'; // استفاده از alias استاندارد پروژه
+import { useThemeContext } from '@/lib/theme-provider';
 
 export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
@@ -17,7 +17,6 @@ export default function SettingsScreen() {
         تنظیمات برنامه
       </Text>
 
-      {/* کلید روشن و خاموش کردن حالت شب */}
       <View style={[styles.settingItem, { backgroundColor: isDark ? '#1e1e1e' : '#ffffff' }]}>
         <View style={styles.settingLabelContainer}>
           <Ionicons 
