@@ -1,20 +1,3 @@
-module.exports = {
-  expo: {
-    name: env.appName,
-    slug: env.appSlug,
-    owner: "faprojects", // نام اکانت جدید شما از متن خطا
-    version: "1.0.0",
-    orientation: "portrait",
-    icon: "./assets/images/icon.png",
-    scheme: env.scheme,
-    userInterfaceStyle: "automatic",
-    newArchEnabled: true,
-    extra: {
-      eas: {
-        projectId: "" // بگذارید خالی بماند تا خودش ثبت کند
-      }
-    },
-    // ... بقیه کدهای قبلی
 const rawBundleId = "com.app.pocketbudget";
 const bundleId =
   rawBundleId
@@ -43,7 +26,7 @@ module.exports = {
   expo: {
     name: env.appName,
     slug: env.appSlug,
-    // owner حذف شد تا روی اکانت جدید ست شود
+    owner: "faprojects", // اکانت جدید شما
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -52,7 +35,7 @@ module.exports = {
     newArchEnabled: true,
     extra: {
       eas: {
-        projectId: "" // خالی گذاشته شد تا EAS پروژه جدید را در اکانت جدید بسازد
+        projectId: "" // خالی گذاشته شد تا دستور eas project:init در گیت‌هاب آن را مقداردهی کند
       }
     },
     ios: {
