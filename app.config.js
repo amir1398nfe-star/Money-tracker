@@ -26,16 +26,16 @@ module.exports = {
   expo: {
     name: env.appName,
     slug: env.appSlug,
-    owner: "expo3373",
+    // owner حذف شد تا روی اکانت جدید ست شود
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: env.scheme,
     userInterfaceStyle: "automatic",
-    newArchEnabled: true, // این خط از false به true تغییر کرد تا خطای Reanimated حل شود
+    newArchEnabled: true,
     extra: {
       eas: {
-        projectId: "c13c5f36-05fe-4265-b5f7-3299c48c6c73"
+        projectId: "" // خالی گذاشته شد تا EAS پروژه جدید را در اکانت جدید بسازد
       }
     },
     ios: {
