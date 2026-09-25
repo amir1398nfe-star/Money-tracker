@@ -1,11 +1,12 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # امکان اجرای دستی ورک‌فلو از تب Actions در گیت‌هاب
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -14,6 +15,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm' # کش کردن پکیج‌ها برای سرعت بخشیدن به اجرای مراحل بعدی
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
