@@ -6,7 +6,7 @@ import { useColorScheme } from "./use-color-scheme";
  * Usage: const colors = useColors(); then colors.text, colors.background, etc.
  */
 export function useColors(colorSchemeOverride?: ColorScheme): ThemeColorPalette {
-  const colorSchema = useColorScheme();
+  const colorScheme = useColorScheme();
   const scheme = (colorSchemeOverride ?? colorScheme ?? "light") as ColorScheme;
   
   // استفاده از SchemeColors به جای Colors
