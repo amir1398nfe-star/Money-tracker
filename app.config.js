@@ -115,8 +115,8 @@ module.exports = {
           android: {
             enableProguardInReleaseBuilds: false,
             minSdkVersion: 24,
-            compileSdkVersion: 34,
-            targetSdkVersion: 34,
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
             kotlinVersion: "2.0.0"
           }
         }
