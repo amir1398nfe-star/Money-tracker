@@ -26,7 +26,7 @@ module.exports = {
   expo: {
     name: env.appName,
     slug: env.appSlug,
-    owner: "faprojects", // اکانت جدید شما
+    owner: "faprojects",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -35,7 +35,7 @@ module.exports = {
     newArchEnabled: true,
     extra: {
       eas: {
-        projectId: "" // خالی گذاشته شد تا دستور eas project:init در گیت‌هاب آن را مقداردهی کند
+        projectId: "54484406-4831-4d61-8dfb-aa9558e61108"
       }
     },
     ios: {
