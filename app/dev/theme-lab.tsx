@@ -36,7 +36,7 @@ export default function ThemeLabScreen() {
         name,
         value: SchemeColors[colorScheme][name],
       })),
-    [colorScheme],
+    [colorScheme]
   );
 
   const tileStyles = useMemo(() => {
