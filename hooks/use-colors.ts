@@ -8,5 +8,7 @@ import { useColorScheme } from "./use-color-scheme";
 export function useColors(colorSchemeOverride?: ColorScheme): ThemeColorPalette {
   const colorSchema = useColorScheme();
   const scheme = (colorSchemeOverride ?? colorSchema ?? "light") as ColorScheme;
-  return Colors[scheme];
+  
+  // اگر پالت رنگ پیدا نشد، به عنوان فال‌بک از لایت (light) استفاده کن تا کرش نکند
+  return Colors[scheme] ?? Colors["light"] ?? {};
 }
