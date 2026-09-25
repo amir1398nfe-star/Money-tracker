@@ -1,3 +1,20 @@
+module.exports = {
+  expo: {
+    name: env.appName,
+    slug: env.appSlug,
+    owner: "faprojects", // نام اکانت جدید شما از متن خطا
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/icon.png",
+    scheme: env.scheme,
+    userInterfaceStyle: "automatic",
+    newArchEnabled: true,
+    extra: {
+      eas: {
+        projectId: "" // بگذارید خالی بماند تا خودش ثبت کند
+      }
+    },
+    // ... بقیه کدهای قبلی
 const rawBundleId = "com.app.pocketbudget";
 const bundleId =
   rawBundleId
