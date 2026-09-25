@@ -21,10 +21,10 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: Configure EAS Project
+      - name: Initialize EAS Project
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas project:init --force --non-interactive || true
+        run: eas init --account faprojects --non-interactive --force
 
       - name: Build APK
         env:
