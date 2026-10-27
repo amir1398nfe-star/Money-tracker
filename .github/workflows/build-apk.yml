@@ -11,6 +11,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug - List all files
+        run: |
+          echo "=== لیست تمام فایل‌های موجود در مخزن ==="
+          find . -maxdepth 4
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -26,16 +31,14 @@ jobs:
 
       - name: Find project and build APK
         run: |
-          # پیدا کردن خودکار مسیر پوشه‌ای که فایل pubspec.yaml در آن قرار دارد
-          PUBSPEC_FILE=$(find . -name "pubspec.yaml" -maxdepth 3)
+          PUBSPEC_FILE=$(find . -name "pubspec.yaml" -maxdepth 4)
           if [ -z "$PUBSPEC_FILE" ]; then
-            echo "Error: pubspec.yaml not found!"
+            echo "Error: pubspec.yaml not found anywhere!"
             exit 1
           fi
           PROJECT_DIR=$(dirname "$PUBSPEC_FILE")
           echo "Found project in: $PROJECT_DIR"
           
-          # ورود به پوشه پروژه و اجرای دستورات
           cd "$PROJECT_DIR"
           flutter pub get
           flutter build apk --release
