@@ -34,6 +34,8 @@ jobs:
           echo "Found project in: $PROJECT_DIR"
           
           cd "$PROJECT_DIR"
+          # ساخت و آپدیت خودکار پوشه اندروید با استاندارد جدید (v2)
+          flutter create . --platforms=android
           flutter pub get
           flutter build apk --release
 
