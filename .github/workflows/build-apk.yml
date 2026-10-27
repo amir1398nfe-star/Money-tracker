@@ -1,7 +1,7 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch: # امکان اجرای دستی ورک‌فلو از تب Actions در گیت‌هاب
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,24 +11,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          node-version: 20
-          cache: 'npm' # کش کردن پکیج‌ها برای سرعت بخشیدن به اجرای مراحل بعدی
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.x'
+          channel: 'stable'
+          cache: true
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: flutter pub get
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      - name: Build APK
+        run: flutter build apk --release
 
-      - name: Initialize EAS Project
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas init --account faprojects --non-interactive --force
-
-      - name: Build APK on EAS
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas build --platform android --profile preview --non-interactive --clear-cache
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
