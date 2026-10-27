@@ -1,5 +1,5 @@
 name: money_tracker
-description: A shift and work tracker app.
+description: A complete financial, check and debt tracker app.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,11 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: ^2.2.2
-  shamsi_date: ^1.0.0
-  screenshot: ^3.0.0
-  gal: ^2.2.1
-  path_provider: ^2.1.2
+  shared_preferences: ^2.5.6
+  shamsi_date: ^1.1.1
 
 dev_dependencies:
   flutter_test:
