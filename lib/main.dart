@@ -48,10 +48,19 @@ class _MoneyTrackerAppState extends State<MoneyTrackerApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'مدیریت مالی پیشرفته',
+      title: 'مدیریت مالی هوشمند',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(brightness: Brightness.light, primarySwatch: Colors.teal, useMaterial3: true),
-      darkTheme: ThemeData(brightness: Brightness.dark, primarySwatch: Colors.teal, useMaterial3: true),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
+        useMaterial3: true,
+        fontFamily: 'Vazir', // سازگار با فونت‌های فارسی
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark),
+        useMaterial3: true,
+      ),
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: HomeScreen(
         isDarkMode: _isDarkMode,
@@ -63,7 +72,7 @@ class _MoneyTrackerAppState extends State<MoneyTrackerApp> {
   }
 }
 
-// مدل‌های داده
+// مدل‌ها
 class BankAccount {
   final String name;
   double balance;
@@ -115,7 +124,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  List<BankAccount> _accounts = [BankAccount(name: 'حساب پیش‌فرض / کیف پول', balance: 0)];
+  List<BankAccount> _accounts = [BankAccount(name: 'کیف پول نقدی', balance: 0)];
   List<Transaction> _transactions = [];
   List<CheckItem> _checks = [];
   List<DebtItem> _debts = [];
@@ -166,8 +175,15 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('پرداخت درون‌برنامه‌ای بازار'),
-        content: const Text('برای فعال‌سازی بخش مدیریت چک و بدهی، مبلغ ۵۰,۰۰۰ تومان از طریق کافه‌بازار پرداخت شود؟'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.shopping_bag, color: Colors.teal),
+            SizedBox(width: 8),
+            Text('خرید نسخه کامل (بازار)'),
+          ],
+        ),
+        content: const Text('برای باز کردن قفل بخش‌های «چک» و «بدهی‌ها»، ارتقا به نسخه کامل انجام شود؟ (شبیه‌سازی درگاه بازار)'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('انصراف')),
           ElevatedButton(
@@ -175,9 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.pop(context);
               widget.onUnlockPremium();
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('پرداخت موفق! امکانات ویژه فعال شد.')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('پرداخت موفق! امکانات ویژه فعال شد.'), backgroundColor: Colors.teal),
+              );
             },
-            child: const Text('پرداخت و فعال‌سازی'),
+            child: const Text('تایید و پرداخت'),
           ),
         ],
       ),
@@ -196,21 +214,22 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('مدیریت مالی هوشمند'), centerTitle: true, backgroundColor: Colors.teal, foregroundColor: Colors.white),
+      appBar: AppBar(
+        title: const Text('مدیریت مالی هوشمند', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.teal,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.wallet), label: 'مالی'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'نمودار'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'چک'),
-          BottomNavigationBarItem(icon: Icon(Icons.money_off), label: 'بدهی'),
-          BottomNavigationBarItem(icon: Icon(Icons.lightbulb), label: 'آموزش'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'تنظیمات'),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.wallet_outlined), selectedIcon: Icon(Icons.wallet), label: 'مالی'),
+          NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'نمودار'),
+          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'چک'),
+          NavigationDestination(icon: Icon(Icons.money_off_outlined), selectedIcon: Icon(Icons.money_off), label: 'بدهی'),
+          NavigationDestination(icon: Icon(Icons.lightbulb_outline), selectedIcon: Icon(Icons.lightbulb), label: 'آموزش'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'تنظیمات'),
         ],
       ),
     );
@@ -223,17 +242,30 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock, size: 70, color: Colors.orange),
-            const SizedBox(height: 16),
-            Text('$name قفل است', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text('این بخش ویژه است. برای دسترسی از طریق کافه‌بازار اقدام کنید.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), shape: BoxShape.circle),
+              child: const Icon(Icons.lock_rounded, size: 60, color: Colors.orange),
+            ),
             const SizedBox(height: 20),
+            Text('$name قفل است', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text(
+              'با خرید نسخه کامل از کافه‌بازار، به مدیریت پیشرفته چک‌ها و بدهی‌ها دسترسی پیدا کنید.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, height: 1.5),
+            ),
+            const SizedBox(height: 24),
             ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: _simulateBazaarPurchase,
               icon: const Icon(Icons.shopping_bag),
-              label: const Text('خرید از کافه‌بازار'),
+              label: const Text('خرید از کافه‌بازار (ارتقا)'),
             ),
           ],
         ),
@@ -245,81 +277,140 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFinancialTab() {
     return Column(
       children: [
+        // کارت موجودی کل شکیل
         Container(
-          padding: const EdgeInsets.all(16),
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
           margin: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [Colors.teal.shade700, Colors.teal.shade400]),
-            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [Colors.teal.shade700, Colors.teal.shade400],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
+            ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('موجودی کل تمامی حساب‌ها', style: TextStyle(color: Colors.white70)),
-              const SizedBox(height: 6),
-              Text('${_totalBalance.toStringAsFixed(0)} تومان', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const Divider(color: Colors.white30),
+              const Text('موجودی کل تمامی حساب‌ها', style: TextStyle(color: Colors.white70, fontSize: 13)),
+              const SizedBox(height: 8),
+              Text('${_totalBalance.toStringAsFixed(0)} تومان', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+              const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(color: Colors.white24, height: 1)),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('درآمد: +${_totalIncome.toStringAsFixed(0)}', style: const TextStyle(color: Colors.greenAccent)),
-                  Text('هزینه: -${_totalExpense.toStringAsFixed(0)}', style: const TextStyle(color: Colors.redAccent)),
+                  Row(
+                    children: [
+                      const Icon(Icons.arrow_downward, color: Colors.greenAccent, size: 18),
+                      const SizedBox(width: 4),
+                      Text('درآمد: +${_totalIncome.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Icon(Icons.arrow_upward, color: Colors.redAccent, size: 18),
+                      const SizedBox(width: 4),
+                      Text('هزینه: -${_totalExpense.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    ],
+                  ),
                 ],
               ),
             ],
           ),
         ),
-        // لیست حساب‌ها
+
+        // بخش حساب‌ها
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('حساب‌های من', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              TextButton.icon(onPressed: _showAddAccountDialog, icon: const Icon(Icons.add, size: 18), label: const Text('افزودن حساب'))
+              TextButton.icon(
+                onPressed: _showAddAccountDialog,
+                icon: const Icon(Icons.add_circle_outline, size: 18),
+                label: const Text('افزودن حساب'),
+              )
             ],
           ),
         ),
         SizedBox(
-          height: 70,
+          height: 80,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _accounts.length,
             itemBuilder: (context, i) => Container(
-              width: 140,
+              width: 150,
               margin: EdgeInsets.only(left: i == 0 ? 16 : 8, right: i == _accounts.length - 1 ? 16 : 0),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(border: Border.all(color: Colors.teal), borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.teal.withOpacity(0.3)),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 5, offset: const Offset(0, 2))],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(_accounts[i].name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                  Text(_accounts[i].name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
-                  Text('${_accounts[i].balance.toStringAsFixed(0)} ت', style: const TextStyle(fontSize: 13, color: Colors.teal)),
+                  Text('${_accounts[i].balance.toStringAsFixed(0)} ت', style: const TextStyle(fontSize: 12, color: Colors.teal, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
           ),
         ),
-        const Divider(height: 20),
+        const SizedBox(height: 10),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Align(alignment: Alignment.centerRight, child: Text('تراکنش‌های اخیر', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
         ),
         Expanded(
           child: _transactions.isEmpty
-              ? const Center(child: Text('تراکنشی ثبت نشده است'))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.receipt_long_outlined, size: 50, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      const Text('هنوز تراکنشی ثبت نشده است', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                )
               : ListView.builder(
                   itemCount: _transactions.length,
                   itemBuilder: (context, index) {
                     final tx = _transactions[index];
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                      ),
                       child: ListTile(
-                        leading: Icon(tx.isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: tx.isIncome ? Colors.green : Colors.red),
-                        title: Text(tx.title),
-                        subtitle: Text('حساب: ${tx.accountName} | ${tx.date}'),
-                        trailing: Text('${tx.isIncome ? '+' : '-'}${tx.amount.toStringAsFixed(0)}', style: TextStyle(color: tx.isIncome ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
+                        leading: CircleAvatar(
+                          backgroundColor: tx.isIncome ? Colors.green.shade50 : Colors.red.shade50,
+                          child: Icon(
+                            tx.isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                            color: tx.isIncome ? Colors.green : Colors.red,
+                          ),
+                        ),
+                        title: Text(tx.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('حساب: ${tx.accountName} | ${tx.date}', style: const TextStyle(fontSize: 11)),
+                        trailing: Text(
+                          '${tx.isIncome ? '+' : '-'}${tx.amount.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            color: tx.isIncome ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -328,17 +419,22 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white, minimumSize: const Size.fromHeight(45)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
             onPressed: _showAddTransactionDialog,
             icon: const Icon(Icons.add),
-            label: const Text('ثبت تراکنش جدید'),
+            label: const Text('ثبت تراکنش جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           ),
         ),
       ],
     );
   }
 
-  // ۲. تب نمودارها و تحلیل گرافیکی
+  // ۲. تب نمودارها
   Widget _buildChartsTab() {
     double maxVal = (_totalIncome > _totalExpense ? _totalIncome : _totalExpense);
     if (maxVal == 0) maxVal = 1;
@@ -348,40 +444,46 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('نمودار مقایسه کل دخل و خرج', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
+          const Text('تحلیل گرافیکی دخل و خرج', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 24),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // ستون درآمد
                 Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text('+${_totalIncome.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, color: Colors.green)),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: 50,
-                      height: (_totalIncome / maxVal) * 200,
-                      decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(8)),
-                    ),
+                    Text('+${_totalIncome.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
+                    Container(
+                      width: 60,
+                      height: (_totalIncome / maxVal) * 200,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: const LinearGradient(colors: [Colors.green, Colors.greenAccent], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     const Text('کل درآمد', style: TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
-                // ستون هزینه
                 Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text('-${_totalExpense.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, color: Colors.red)),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: 50,
-                      height: (_totalExpense / maxVal) * 200,
-                      decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(8)),
-                    ),
+                    Text('-${_totalExpense.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
+                    Container(
+                      width: 60,
+                      height: (_totalExpense / maxVal) * 200,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: const LinearGradient(colors: [Colors.red, Colors.redAccent], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     const Text('کل هزینه', style: TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -390,14 +492,25 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 20),
           Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 0,
+            color: Colors.teal.withOpacity(0.05),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  const Text('وضعیت تراز مالی:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(_totalIncome >= _totalExpense ? 'وضعیت عالی: درآمد شما بیشتر از هزینه‌هایتان است.' : 'هشدار: هزینه‌ها از درآمد شما بیشتر شده است!'),
+                  const Icon(Icons.insights, color: Colors.teal, size: 30),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('وضعیت تراز مالی', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text(_totalIncome >= _totalExpense ? 'عالی! درآمد شما از هزینه‌ها پیشی گرفته است.' : 'توجه: هزینه‌های شما بیشتر از درآمدتان بوده است.'),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -421,9 +534,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: ListTile(
-                        title: Text('بانک: ${c.bankName} (${c.checkNumber})'),
+                        leading: const Icon(Icons.receipt, color: Colors.teal),
+                        title: Text('بانک: ${c.bankName} (${c.checkNumber})', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('سررسید: ${c.dueDate} | ${c.isReceived ? "دریافتی" : "صادرشده"}'),
-                        trailing: Text('${c.amount.toStringAsFixed(0)} ت', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        trailing: Text('${c.amount.toStringAsFixed(0)} ت', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),
                       ),
                     );
                   },
@@ -456,7 +570,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: ListTile(
-                        title: Text(d.personName),
+                        leading: Icon(d.isIOWebt ? Icons.arrow_circle_down : Icons.arrow_circle_up, color: d.isIOWebt ? Colors.green : Colors.red),
+                        title: Text(d.personName, style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('موعد: ${d.dueDate} | ${d.isIOWebt ? "طلبکارم" : "بدهکارم"}'),
                         trailing: Text('${d.amount.toStringAsFixed(0)} ت', style: TextStyle(color: d.isIOWebt ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
                       ),
@@ -477,51 +592,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ۵. تب مطالب مالی و برنامه‌ریزی (سرگرم‌کننده و آموزشی)
+  // ۵. تب آموزش و برنامه‌ریزی
   Widget _buildPlanningAndTipsTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('برنامه‌ریزی و مطالب مالی سرگرم‌کننده', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text('آموزش و مطالب مالی', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Card(
-          color: Colors.teal.shade50,
+          elevation: 0,
+          color: Colors.teal.withOpacity(0.08),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: const Padding(
             padding: EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('💡 قانون طلایی بودجه‌بندی (۵۰ / ۳۰ / ۲۰)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),
-                SizedBox(height: 6),
-                Text('۵۰ درصد درآمدتان را برای هزینه‌های ضروری (اجاره، قبض، خوراک)، ۳۰ درصد را برای خواسته‌ها و تفریح، و حتماً ۲۰ درصد را پس‌انداز یا سرمایه‌گذاری کنید.'),
+                Text('💡 قانون طلایی بودجه‌بندی (۵۰ / ۳۰ / ۲۰)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal, fontSize: 15)),
+                SizedBox(height: 8),
+                Text('۵۰ درصد درآمد برای هزینه‌های ضروری، ۳۰ درصد برای خواسته‌ها و تفریح، و ۲۰ درصد برای پس‌انداز و سرمایه‌گذاری.', style: TextStyle(height: 1.4)),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.withOpacity(0.2))),
+          child: const Padding(
+            padding: EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('🚀 ترفند مدیریت جیب', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Text('قبل از خرید هر چیز غیرضروری از خود بپرسید: آیا این کالا برای من «نیاز» است یا «هوس لحظه‌ای»؟ صبر کردن برای ۲۴ ساعت معجزه می‌کند!'),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('🎯 هدف‌گذاری مالی ماهانه', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Text('همیشه برای پس‌انداز خود یک هدف مشخص تعیین کنید؛ مثلاً خرید وسیله یا سفر. داشتن هدف انگیزه پس‌انداز کردن را چند برابر می‌کند.'),
+              children: [
+                Text('🚀 ترفند طلایی کنترل خرید هیجانی', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                SizedBox(height: 8),
+                Text('قبل از خرید کالاهای غیرضروری، قانون ۲۴ ساعت را اجرا کنید؛ یعنی یک روز صبر کنید، اگر هنوز نیاز داشتید اقدام به خرید کنید.', style: TextStyle(height: 1.4)),
               ],
             ),
           ),
@@ -536,30 +641,32 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         const Text('تنظیمات برنامه', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const Divider(),
+        const Divider(height: 24),
         SwitchListTile(
           title: const Text('حالت شب (تاریک)'),
+          subtitle: const Text('تغییر تم برنامه برای محافظت از چشم'),
           value: widget.isDarkMode,
           onChanged: widget.onThemeChanged,
-          secondary: const Icon(Icons.dark_mode),
+          secondary: const Icon(Icons.dark_mode_outlined),
         ),
-        const Divider(),
+        const Divider(height: 24),
         ListTile(
+          leading: const Icon(Icons.star_outline, color: Colors.amber),
           title: const Text('وضعیت اشتراک'),
-          subtitle: Text(widget.isPremium ? 'نسخه کامل (فعال)' : 'نسخه رایگان'),
+          subtitle: Text(widget.isPremium ? 'نسخه کامل (پریمیوم فعال)' : 'نسخه رایگان'),
           trailing: widget.isPremium
               ? const Chip(label: Text('پریمیوم'), backgroundColor: Colors.teal, labelStyle: TextStyle(color: Colors.white))
               : ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
                   onPressed: _simulateBazaarPurchase,
-                  child: const Text('خرید نسخه کامل'),
+                  child: const Text('ارتقا به کامل'),
                 ),
         ),
       ],
     );
   }
 
-  // دیالوگ‌های افزودن
+  // دیالوگ‌ها
   void _showAddAccountDialog() {
     final nameC = TextEditingController();
     final balC = TextEditingController();
@@ -570,7 +677,7 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameC, decoration: const InputDecoration(labelText: 'نام حساب (مثلاً بانک ملی)')),
+            TextField(controller: nameC, decoration: const InputDecoration(labelText: 'نام حساب (مثلاً بانک ملت)')),
             TextField(controller: balC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'موجودی اولیه')),
           ],
         ),
@@ -606,14 +713,16 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: titleC, decoration: const InputDecoration(labelText: 'عنوان')),
-                TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'مبلغ')),
+                TextField(controller: titleC, decoration: const InputDecoration(labelText: 'عنوان تراکنش')),
+                TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'مبلغ (تومان)')),
+                const SizedBox(height: 10),
                 DropdownButton<String>(
                   value: selectedAcc,
                   isExpanded: true,
                   items: _accounts.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
                   onChanged: (val) => setDState(() => selectedAcc = val!),
                 ),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -634,9 +743,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() {
                     _transactions.insert(0, Transaction(title: titleC.text, amount: amt, isIncome: isIncome, accountName: selectedAcc, date: '${Jalali.now().year}/${Jalali.now().month}/${Jalali.now().day}'));
                     for (var acc in _accounts) {
-                      if (acc.name == selectedAcc) {
-                        acc.balance += isIncome ? amt : -amt;
-                      }
+                      if (acc.name == selectedAcc) acc.balance += isIncome ? amt : -amt;
                     }
                   });
                   _saveAll();
@@ -666,7 +773,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextField(controller: bC, decoration: const InputDecoration(labelText: 'نام بانک')),
                 TextField(controller: nC, decoration: const InputDecoration(labelText: 'شماره چک')),
                 TextField(controller: aC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'مبلغ')),
-                TextField(controller: dC, decoration: const InputDecoration(labelText: 'سررسید')),
+                TextField(controller: dC, decoration: const InputDecoration(labelText: 'تاریخ سررسید')),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -703,7 +810,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDState) => AlertDialog(
-          title: const Text('ثبت بدهی/طلب'),
+          title: const Text('ثبت بدهی / طلب'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
