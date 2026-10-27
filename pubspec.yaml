@@ -1,5 +1,5 @@
 name: money_tracker
-description: A complete financial, check and debt tracker app.
+description: A complete financial app with accounts, charts, and tips.
 publish_to: 'none'
 version: 1.0.0+1
 
