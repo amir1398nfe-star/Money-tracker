@@ -54,7 +54,6 @@ class _MoneyTrackerAppState extends State<MoneyTrackerApp> {
         brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
         useMaterial3: true,
-        fontFamily: 'Vazir', // سازگار با فونت‌های فارسی
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
@@ -82,14 +81,34 @@ class BankAccount {
 }
 
 class Transaction {
+  final String id;
   final String title;
   final double amount;
   final bool isIncome;
   final String accountName;
+  final String category;
   final String date;
-  Transaction({required this.title, required this.amount, required this.isIncome, required this.accountName, required this.date});
-  Map<String, dynamic> toJson() => {'title': title, 'amount': amount, 'isIncome': isIncome, 'accountName': accountName, 'date': date};
-  factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(title: json['title'], amount: json['amount'], isIncome: json['isIncome'], accountName: json['accountName'] ?? 'اصلی', date: json['date']);
+  Transaction({required this.id, required this.title, required this.amount, required this.isIncome, required this.accountName, required this.category, required this.date});
+  
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'amount': amount,
+        'isIncome': isIncome,
+        'accountName': accountName,
+        'category': category,
+        'date': date,
+      };
+
+  factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
+        id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        title: json['title'],
+        amount: json['amount'],
+        isIncome: json['isIncome'],
+        accountName: json['accountName'] ?? 'کیف پول نقدی',
+        category: json['category'] ?? (json['isIncome'] ? 'سایر درآمدها' : 'سایر هزینه‌ها'),
+        date: json['date'],
+      );
 }
 
 class CheckItem {
@@ -129,6 +148,31 @@ class _HomeScreenState extends State<HomeScreen> {
   List<CheckItem> _checks = [];
   List<DebtItem> _debts = [];
 
+  // دسته‌بندی‌های پیش‌فرض گسترده
+  List<String> expenseCategories = [
+    'خوراک و سوپرمارکت',
+    'مسکن و اجاره',
+    'حمل‌ونقل و سوخت',
+    'قبض و خدمات',
+    'پوشاک و لوازم شخصی',
+    'درمان و سلامت',
+    'آموزش و کتاب',
+    'تفریح، سرگرمی و سفر',
+    'رستوران و کافه',
+    'قسط و وام',
+    'سایر هزینه‌ها'
+  ];
+
+  List<String> incomeCategories = [
+    'حقوق و دستمزد',
+    'پاداش و عیدی',
+    'کار آزاد / فریلنسر',
+    'سود سرمایه‌گذاری',
+    'فروش دارایی',
+    'هدیه و پاداش',
+    'سایر درآمدها'
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -157,6 +201,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (debtData != null) {
       setState(() => _debts = (jsonDecode(debtData) as List).map((e) => DebtItem.fromJson(e)).toList());
     }
+
+    final List<String>? savedExpCat = prefs.getStringList('expense_categories');
+    if (savedExpCat != null) setState(() => expenseCategories = savedExpCat);
+
+    final List<String>? savedIncCat = prefs.getStringList('income_categories');
+    if (savedIncCat != null) setState(() => incomeCategories = savedIncCat);
   }
 
   Future<void> _saveAll() async {
@@ -165,6 +215,8 @@ class _HomeScreenState extends State<HomeScreen> {
     await prefs.setString('transactions', jsonEncode(_transactions.map((e) => e.toJson()).toList()));
     await prefs.setString('checks', jsonEncode(_checks.map((e) => e.toJson()).toList()));
     await prefs.setString('debts', jsonEncode(_debts.map((e) => e.toJson()).toList()));
+    await prefs.setStringList('expense_categories', expenseCategories);
+    await prefs.setStringList('income_categories', incomeCategories);
   }
 
   double get _totalBalance => _accounts.fold(0.0, (sum, acc) => sum + acc.balance);
@@ -183,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text('خرید نسخه کامل (بازار)'),
           ],
         ),
-        content: const Text('برای باز کردن قفل بخش‌های «چک» و «بدهی‌ها»، ارتقا به نسخه کامل انجام شود؟ (شبیه‌سازی درگاه بازار)'),
+        content: const Text('برای باز کردن قفل بخش‌های «چک» و «بدهی‌ها»، ارتقا به نسخه کامل انجام شود؟'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('انصراف')),
           ElevatedButton(
@@ -217,7 +269,6 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('مدیریت مالی هوشمند', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        elevation: 0,
       ),
       body: pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
@@ -273,11 +324,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ۱. تب مالی و حساب‌ها
+  // ۱. تب مالی
   Widget _buildFinancialTab() {
     return Column(
       children: [
-        // کارت موجودی کل شکیل
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -289,9 +339,6 @@ class _HomeScreenState extends State<HomeScreen> {
               end: Alignment.bottomLeft,
             ),
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
-            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,18 +369,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-
-        // بخش حساب‌ها
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('حساب‌های من', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              TextButton.icon(
-                onPressed: _showAddAccountDialog,
-                icon: const Icon(Icons.add_circle_outline, size: 18),
-                label: const Text('افزودن حساب'),
+              Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: _showTransferDialog,
+                    icon: const Icon(Icons.swap_horiz, size: 18),
+                    label: const Text('انتقال وجه'),
+                  ),
+                  TextButton.icon(
+                    onPressed: _showAddAccountDialog,
+                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    label: const Text('حساب جدید'),
+                  ),
+                ],
               )
             ],
           ),
@@ -351,7 +405,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.teal.withOpacity(0.3)),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 5, offset: const Offset(0, 2))],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,20 +421,11 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 10),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Align(alignment: Alignment.centerRight, child: Text('تراکنش‌های اخیر', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+          child: Align(alignment: Alignment.centerRight, child: Text('تراکنش‌های اخیر', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey))),
         ),
         Expanded(
           child: _transactions.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.receipt_long_outlined, size: 50, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      const Text('هنوز تراکنشی ثبت نشده است', style: TextStyle(color: Colors.grey)),
-                    ],
-                  ),
-                )
+              ? const Center(child: Text('هنوز تراکنشی ثبت نشده است', style: TextStyle(color: Colors.grey)))
               : ListView.builder(
                   itemCount: _transactions.length,
                   itemBuilder: (context, index) {
@@ -396,20 +440,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: tx.isIncome ? Colors.green.shade50 : Colors.red.shade50,
-                          child: Icon(
-                            tx.isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: tx.isIncome ? Colors.green : Colors.red,
-                          ),
+                          child: Icon(tx.isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: tx.isIncome ? Colors.green : Colors.red),
                         ),
                         title: Text(tx.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('حساب: ${tx.accountName} | ${tx.date}', style: const TextStyle(fontSize: 11)),
-                        trailing: Text(
-                          '${tx.isIncome ? '+' : '-'}${tx.amount.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            color: tx.isIncome ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
+                        subtitle: Text('${tx.category} • ${tx.accountName} | ${tx.date}', style: const TextStyle(fontSize: 11)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${tx.isIncome ? '+' : '-'}${tx.amount.toStringAsFixed(0)}',
+                              style: TextStyle(color: tx.isIncome ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                              onPressed: () => _showEditTransactionDialog(tx),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                              onPressed: () => _deleteTransaction(tx),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -434,89 +484,132 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _deleteTransaction(Transaction tx) {
+    setState(() {
+      for (var acc in _accounts) {
+        if (acc.name == tx.accountName) {
+          acc.balance -= tx.isIncome ? tx.amount : -tx.amount;
+        }
+      }
+      _transactions.removeWhere((t) => t.id == tx.id);
+    });
+    _saveAll();
+  }
+
   // ۲. تب نمودارها
   Widget _buildChartsTab() {
     double maxVal = (_totalIncome > _totalExpense ? _totalIncome : _totalExpense);
     if (maxVal == 0) maxVal = 1;
 
-    return Padding(
+    Map<String, double> categoryExpenses = {};
+    for (var cat in expenseCategories) {
+      double sum = _transactions.where((t) => !t.isIncome && t.category == cat).fold(0.0, (s, t) => s + t.amount);
+      if (sum > 0) categoryExpenses[cat] = sum;
+    }
+
+    return ListView(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('تحلیل گرافیکی دخل و خرج', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text('+${_totalIncome.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 60,
-                      height: (_totalIncome / maxVal) * 200,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: const LinearGradient(colors: [Colors.green, Colors.greenAccent], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text('کل درآمد', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text('-${_totalExpense.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 60,
-                      height: (_totalExpense / maxVal) * 200,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: const LinearGradient(colors: [Colors.red, Colors.redAccent], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text('کل هزینه', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            elevation: 0,
-            color: Colors.teal.withOpacity(0.05),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
+      children: [
+        const Text('نمودار کلی کل درآمد و هزینه', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 200,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Icon(Icons.insights, color: Colors.teal, size: 30),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('وضعیت تراز مالی', style: TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(_totalIncome >= _totalExpense ? 'عالی! درآمد شما از هزینه‌ها پیشی گرفته است.' : 'توجه: هزینه‌های شما بیشتر از درآمدتان بوده است.'),
-                      ],
-                    ),
+                  Text('+${_totalIncome.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 60,
+                    height: (_totalIncome / maxVal) * 130,
+                    decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text('کل درآمد', style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('-${_totalExpense.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 60,
+                    height: (_totalExpense / maxVal) * 130,
+                    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text('کل هزینه', style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 40),
+        const Text('گزارش هزینه‌ها بر اساس دسته‌بندی', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        categoryExpenses.isEmpty
+            ? const Padding(padding: EdgeInsets.all(16.0), child: Text('هنوز هزینه‌دسته‌بندی‌شده‌ای ثبت نشده است.', style: TextStyle(color: Colors.grey)))
+            : ...categoryExpenses.entries.map((entry) {
+                double percent = _totalExpense > 0 ? (entry.value / _totalExpense) * 100 : 0;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('${entry.value.toStringAsFixed(0)} تومان (${percent.toStringAsFixed(1)}%)', style: const TextStyle(color: Colors.red, fontSize: 13)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: percent / 100,
+                        backgroundColor: Colors.grey.shade200,
+                        color: Colors.redAccent,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+        const Divider(height: 40),
+        const Text('وضعیت و موجودی تفکیکی هر حساب', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        ..._accounts.map((acc) {
+          double accIncome = _transactions.where((t) => t.accountName == acc.name && t.isIncome).fold(0.0, (s, t) => s + t.amount);
+          double accExpense = _transactions.where((t) => t.accountName == acc.name && !t.isIncome).fold(0.0, (s, t) => s + t.amount);
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(acc.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.teal)),
+                  const SizedBox(height: 6),
+                  Text('موجودی فعلی: ${acc.balance.toStringAsFixed(0)} تومان'),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('درآمد: +$accIncome', style: const TextStyle(color: Colors.green, fontSize: 12)),
+                      Text('هزینه: -$accExpense', style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    ],
                   ),
                 ],
               ),
             ),
-          )
-        ],
-      ),
+          );
+        }),
+      ],
     );
   }
 
@@ -558,8 +651,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ۴. تب بدهی‌ها
   Widget _buildDebtsTab() {
+    double totalClaims = _debts.where((d) => d.isIOWebt).fold(0.0, (s, d) => s + d.amount);
+    double totalOwed = _debts.where((d) => !d.isIOWebt).fold(0.0, (s, d) => s + d.amount);
+    double netBalance = totalClaims - totalOwed;
+
     return Column(
       children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.teal.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.teal.shade200),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      const Text('کل طلب‌ها', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text('+${totalClaims.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Text('کل بدهی‌ها', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text('-${totalOwed.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                ],
+              ),
+              const Divider(height: 16),
+              Text('برایند نهایی: ${netBalance.toStringAsFixed(0)} تومان', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: netBalance >= 0 ? Colors.green : Colors.red)),
+            ],
+          ),
+        ),
         Expanded(
           child: _debts.isEmpty
               ? const Center(child: Text('بدهی یا طلبی ثبت نشده است'))
@@ -592,50 +721,42 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ۵. تب آموزش و برنامه‌ریزی
+  // ۵. تب آموزش و هوش مالی
   Widget _buildPlanningAndTipsTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('آموزش و مطالب مالی', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text('آکادمی آموزش و هوش مالی', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          color: Colors.teal.withOpacity(0.08),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('💡 قانون طلایی بودجه‌بندی (۵۰ / ۳۰ / ۲۰)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal, fontSize: 15)),
-                SizedBox(height: 8),
-                Text('۵۰ درصد درآمد برای هزینه‌های ضروری، ۳۰ درصد برای خواسته‌ها و تفریح، و ۲۰ درصد برای پس‌انداز و سرمایه‌گذاری.', style: TextStyle(height: 1.4)),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.withOpacity(0.2))),
-          child: const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('🚀 ترفند طلایی کنترل خرید هیجانی', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                SizedBox(height: 8),
-                Text('قبل از خرید کالاهای غیرضروری، قانون ۲۴ ساعت را اجرا کنید؛ یعنی یک روز صبر کنید، اگر هنوز نیاز داشتید اقدام به خرید کنید.', style: TextStyle(height: 1.4)),
-              ],
-            ),
-          ),
-        ),
+        _buildTipCard('💡 قانون طلایی بودجه‌بندی (۵۰ / ۳۰ / ۲۰)', '۵۰ درصد درآمد برای هزینه‌های ضروری، ۳۰ درصد برای خواسته‌ها و تفریح، و ۲۰ درصد برای پس‌انداز و سرمایه‌گذاری.'),
+        _buildTipCard('🚀 ترفند طلایی کنترل خرید هیجانی', 'قبل از خرید کالاهای غیرضروری، قانون ۲۴ ساعت را اجرا کنید؛ یک روز صبر کنید، اگر هنوز نیاز داشتید اقدام به خرید کنید.'),
+        _buildTipCard('🛡️ صندوق اضطراری (قانون ۶ ماهه)', 'همیشه معادل هزینه ۶ ماه زندگی‌تان را به عنوان پس‌انداز اضطراری در جایی امن نگهداری کنید تا در روزهای سخت نیازی به وام با سود بالا نداشته باشید.'),
+        _buildTipCard('📈 قدرت جادویی سود مرکب', 'آلبرت اینشتین سود مرکب را عجایب هشتم دنیا می‌داند! حتی پس‌اندازهای کوچک ماهانه اگر در جای درست سرمایه‌گذاری شوند، در درازمدت رشد شگفت‌انگیزی خواهند داشت.'),
+        _buildTipCard('💳 مدیریت هوشمند کارت‌های بانکی', 'برای هر دسته از هزینه‌های خود (خوراک، تفریح، پس‌انداز) یک کارت جداگانه یا حساب مشخص در نظر بگیرید تا ولخرجی‌ها به حداقل برسند.'),
       ],
     );
   }
 
-  // ۶. تب تنظیمات
+  Widget _buildTipCard(String title, String desc) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Colors.teal.withOpacity(0.2))),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal, fontSize: 15)),
+            const SizedBox(height: 8),
+            Text(desc, style: const TextStyle(height: 1.4)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ۶. تب تنظیمات همراه با مدیریت دسته‌بندی‌ها
   Widget _buildSettingsTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -648,6 +769,14 @@ class _HomeScreenState extends State<HomeScreen> {
           value: widget.isDarkMode,
           onChanged: widget.onThemeChanged,
           secondary: const Icon(Icons.dark_mode_outlined),
+        ),
+        const Divider(height: 24),
+        ListTile(
+          leading: const Icon(Icons.category, color: Colors.teal),
+          title: const Text('مدیریت دسته‌بندی‌ها'),
+          subtitle: const Text('افزودن یا حذف دسته‌بندی‌های درآمد و هزینه'),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          onTap: _showManageCategoriesDialog,
         ),
         const Divider(height: 24),
         ListTile(
@@ -666,7 +795,208 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // دیالوگ‌ها
+  // دیالوگ مدیریت دسته‌بندی‌ها (افزودن و حذف)
+  void _showManageCategoriesDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDState) => AlertDialog(
+          title: const Text('مدیریت دسته‌بندی‌ها'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: DefaultTabController(
+              length: 2,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'هزینه‌ها'),
+                      Tab(text: 'درآمدها'),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 250,
+                    child: TabBarView(
+                      children: [
+                        // لیست دسته‌بندی هزینه‌ها
+                        Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton.icon(
+                                onPressed: () => _showAddCategoryDialog(true, () => setDState(() {})),
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text('افزودن هزینه جدید'),
+                              ),
+                            ),
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: expenseCategories.length,
+                                itemBuilder: (context, index) => ListTile(
+                                  title: Text(expenseCategories[index]),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                    onPressed: () {
+                                      setDState(() {
+                                        expenseCategories.removeAt(index);
+                                      });
+                                      _saveAll();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        // لیست دسته‌بندی درآمدها
+                        Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton.icon(
+                                onPressed: () => _showAddCategoryDialog(false, () => setDState(() {})),
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text('افزودن درآمد جدید'),
+                              ),
+                            ),
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: incomeCategories.length,
+                                itemBuilder: (context, index) => ListTile(
+                                  title: Text(incomeCategories[index]),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                    onPressed: () {
+                                      setDState(() {
+                                        incomeCategories.removeAt(index);
+                                      });
+                                      _saveAll();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('بستن'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddCategoryDialog(bool isExpense, VoidCallback onRefresh) {
+    final catC = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isExpense ? 'افزودن دسته‌بندی هزینه' : 'افزودن دسته‌بندی درآمد'),
+        content: TextField(
+          controller: catC,
+          decoration: const InputDecoration(labelText: 'نام دسته‌بندی'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('انصراف')),
+          ElevatedButton(
+            onPressed: () {
+              if (catC.text.isNotEmpty) {
+                setState(() {
+                  if (isExpense) {
+                    expenseCategories.add(catC.text);
+                  } else {
+                    incomeCategories.add(catC.text);
+                  }
+                });
+                _saveAll();
+                Navigator.pop(context);
+                onRefresh();
+              }
+            },
+            child: const Text('افزودن'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // انتقال وجه
+  void _showTransferDialog() {
+    if (_accounts.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('برای انتقال وجه باید حداقل دو حساب داشته باشید!')));
+      return;
+    }
+    String fromAcc = _accounts.first.name;
+    String toAcc = _accounts[1].name;
+    final amountC = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDState) => AlertDialog(
+          title: const Text('انتقال وجه بین حساب‌ها'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('از حساب:', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              DropdownButton<String>(
+                value: fromAcc,
+                isExpanded: true,
+                items: _accounts.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
+                onChanged: (val) => setDState(() => fromAcc = val!),
+              ),
+              const SizedBox(height: 10),
+              const Text('به حساب:', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              DropdownButton<String>(
+                value: toAcc,
+                isExpanded: true,
+                items: _accounts.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
+                onChanged: (val) => setDState(() => toAcc = val!),
+              ),
+              const SizedBox(height: 10),
+              TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'مبلغ انتقال (تومان)')),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('انصراف')),
+            ElevatedButton(
+              onPressed: () {
+                if (fromAcc == toAcc) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('حساب مبدأ و مقصد نمی‌تواند یکی باشد!')));
+                  return;
+                }
+                double? amt = double.tryParse(amountC.text);
+                if (amt != null && amt > 0) {
+                  setState(() {
+                    for (var acc in _accounts) {
+                      if (acc.name == fromAcc) acc.balance -= amt;
+                      if (acc.name == toAcc) acc.balance += amt;
+                    }
+                  });
+                  _saveAll();
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('انتقال وجه با موفقیت انجام شد!')));
+                }
+              },
+              child: const Text('انتقال'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAddAccountDialog() {
     final nameC = TextEditingController();
     final balC = TextEditingController();
@@ -698,62 +1028,131 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddTransactionDialog() {
-    final titleC = TextEditingController();
-    final amountC = TextEditingController();
-    bool isIncome = false;
-    String selectedAcc = _accounts.first.name;
+  void _showAddTransactionDialog() => _showTransactionDialogForm(null);
+  void _showEditTransactionDialog(Transaction tx) => _showTransactionDialogForm(tx);
+
+  void _showTransactionDialogForm(Transaction? existingTx) {
+    final titleC = TextEditingController(text: existingTx?.title ?? '');
+    final amountC = TextEditingController(text: existingTx?.amount.toString() ?? '');
+    bool isIncome = existingTx?.isIncome ?? false;
+    String selectedAcc = existingTx?.accountName ?? _accounts.first.name;
+    
+    List<String> currentCategories = isIncome ? incomeCategories : expenseCategories;
+    String selectedCategory = existingTx?.category ?? currentCategories.first;
+    if (!currentCategories.contains(selectedCategory)) {
+      selectedCategory = currentCategories.first;
+    }
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDState) => AlertDialog(
-          title: const Text('ثبت تراکنش'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: titleC, decoration: const InputDecoration(labelText: 'عنوان تراکنش')),
-                TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'مبلغ (تومان)')),
-                const SizedBox(height: 10),
-                DropdownButton<String>(
-                  value: selectedAcc,
-                  isExpanded: true,
-                  items: _accounts.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
-                  onChanged: (val) => setDState(() => selectedAcc = val!),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ChoiceChip(label: const Text('هزینه'), selected: !isIncome, onSelected: (s) => setDState(() => isIncome = false)),
-                    const SizedBox(width: 10),
-                    ChoiceChip(label: const Text('درآمد'), selected: isIncome, onSelected: (s) => setDState(() => isIncome = true)),
-                  ],
-                ),
-              ],
+        builder: (context, setDState) {
+          List<String> activeCategories = isIncome ? incomeCategories : expenseCategories;
+          if (!activeCategories.contains(selectedCategory)) {
+            selectedCategory = activeCategories.isNotEmpty ? activeCategories.first : '';
+          }
+
+          return AlertDialog(
+            title: Text(existingTx == null ? 'ثبت تراکنش جدید' : 'ویرایش تراکنش'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: titleC, decoration: const InputDecoration(labelText: 'عنوان تراکنش')),
+                  TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'مبلغ (تومان)')),
+                  const SizedBox(height: 10),
+                  const Align(alignment: Alignment.centerRight, child: Text('حساب مقصد/مبدأ:', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                  DropdownButton<String>(
+                    value: selectedAcc,
+                    isExpanded: true,
+                    items: _accounts.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
+                    onChanged: (val) => setDState(() => selectedAcc = val!),
+                  ),
+                  const SizedBox(height: 10),
+                  const Align(alignment: Alignment.centerRight, child: Text('دسته‌بندی:', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                  DropdownButton<String>(
+                    value: selectedCategory,
+                    isExpanded: true,
+                    items: activeCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    onChanged: (val) => setDState(() => selectedCategory = val!),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('هزینه'),
+                        selected: !isIncome,
+                        onSelected: (s) {
+                          setDState(() {
+                            isIncome = false;
+                            activeCategories = expenseCategories;
+                            selectedCategory = activeCategories.first;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                      ChoiceChip(
+                        label: const Text('درآمد'),
+                        selected: isIncome,
+                        onSelected: (s) {
+                          setDState(() {
+                            isIncome = true;
+                            activeCategories = incomeCategories;
+                            selectedCategory = activeCategories.first;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('انصراف')),
-            ElevatedButton(
-              onPressed: () {
-                if (titleC.text.isNotEmpty && double.tryParse(amountC.text) != null) {
-                  double amt = double.parse(amountC.text);
-                  setState(() {
-                    _transactions.insert(0, Transaction(title: titleC.text, amount: amt, isIncome: isIncome, accountName: selectedAcc, date: '${Jalali.now().year}/${Jalali.now().month}/${Jalali.now().day}'));
-                    for (var acc in _accounts) {
-                      if (acc.name == selectedAcc) acc.balance += isIncome ? amt : -amt;
-                    }
-                  });
-                  _saveAll();
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('ثبت'),
-            ),
-          ],
-        ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('انصراف')),
+              ElevatedButton(
+                onPressed: () {
+                  if (titleC.text.isNotEmpty && double.tryParse(amountC.text) != null) {
+                    double amt = double.parse(amountC.text);
+                    setState(() {
+                      if (existingTx != null) {
+                        for (var acc in _accounts) {
+                          if (acc.name == existingTx.accountName) {
+                            acc.balance -= existingTx.isIncome ? existingTx.amount : -existingTx.amount;
+                          }
+                        }
+                        _transactions.removeWhere((t) => t.id == existingTx.id);
+                      }
+
+                      final now = Jalali.now();
+                      _transactions.insert(
+                        0,
+                        Transaction(
+                          id: existingTx?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                          title: titleC.text,
+                          amount: amt,
+                          isIncome: isIncome,
+                          accountName: selectedAcc,
+                          category: selectedCategory,
+                          date: existingTx?.date ?? '${now.year}/${now.month}/${now.day}',
+                        ),
+                      );
+
+                      for (var acc in _accounts) {
+                        if (acc.name == selectedAcc) {
+                          acc.balance += isIncome ? amt : -amt;
+                        }
+                      }
+                    });
+                    _saveAll();
+                    Navigator.pop(context);
+                  }
+                },
+                child: Text(existingTx == null ? 'ثبت' : 'ویرایش'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
